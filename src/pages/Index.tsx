@@ -1,12 +1,43 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from "react";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Dashboard } from "@/components/pages/Dashboard";
+import { TablesManagement } from "@/components/pages/TablesManagement";
+import { MenuManagement } from "@/components/pages/MenuManagement";
+import { OrdersManagement } from "@/components/pages/OrdersManagement";
+import { CustomersManagement } from "@/components/pages/CustomersManagement";
+import { Reports } from "@/components/pages/Reports";
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState("dashboard");
+
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return <Dashboard />;
+      case "tables":
+        return <TablesManagement />;
+      case "menu":
+        return <MenuManagement />;
+      case "orders":
+        return <OrdersManagement />;
+      case "customers":
+        return <CustomersManagement />;
+      case "reports":
+        return <Reports />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <main className="flex-1 overflow-auto">
+        <div className="p-6">
+          {renderActiveComponent()}
+        </div>
+      </main>
     </div>
   );
 };
