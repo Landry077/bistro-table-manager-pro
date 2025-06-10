@@ -6,10 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Mail, Phone, Star, Edit, Eye } from "lucide-react";
+import { Search, Mail, Phone, Star, Edit, Eye } from "lucide-react";
+import { AddCustomerDialog } from "@/components/customers/AddCustomerDialog";
+import { EditCustomerDialog } from "@/components/customers/EditCustomerDialog";
 
 export const CustomersManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const { data: customers } = useQuery({
     queryKey: ['customers', searchTerm],
@@ -36,6 +40,11 @@ export const CustomersManagement = () => {
     return { level: 'Bronze', color: 'bg-amber-600' };
   };
 
+  const handleEditCustomer = (customer: any) => {
+    setSelectedCustomer(customer);
+    setEditDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -43,10 +52,7 @@ export const CustomersManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Gestion des Clients</h1>
           <p className="text-gray-600 mt-1">Gérez votre base de données clients</p>
         </div>
-        <Button className="bg-amber-600 hover:bg-amber-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau Client
-        </Button>
+        <AddCustomerDialog />
       </div>
 
       {/* Barre de recherche */}
@@ -116,7 +122,12 @@ export const CustomersManagement = () => {
                     <Eye className="h-4 w-4 mr-1" />
                     Voir
                   </Button>
-                  <Button size="sm" variant="outline" className="flex-1">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => handleEditCustomer(customer)}
+                  >
                     <Edit className="h-4 w-4 mr-1" />
                     Modifier
                   </Button>
@@ -142,6 +153,12 @@ export const CustomersManagement = () => {
           </CardContent>
         </Card>
       )}
+
+      <EditCustomerDialog
+        customer={selectedCustomer}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
     </div>
   );
 };

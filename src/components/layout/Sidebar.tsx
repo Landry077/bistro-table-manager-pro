@@ -9,7 +9,8 @@ import {
   FileText, 
   ChevronLeft, 
   ChevronRight,
-  Coffee
+  Coffee,
+  Package
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,8 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     { id: "dashboard", label: "Tableau de bord", icon: BarChart3 },
     { id: "tables", label: "Gestion des tables", icon: Table },
     { id: "menu", label: "Menu & Produits", icon: Menu },
+    { id: "menus", label: "Gestion des Menus", icon: Coffee },
+    { id: "stock", label: "Gestion du Stock", icon: Package },
     { id: "orders", label: "Commandes", icon: ShoppingCart },
     { id: "customers", label: "Clients", icon: Users },
     { id: "reports", label: "Rapports", icon: FileText },

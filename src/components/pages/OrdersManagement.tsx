@@ -1,16 +1,20 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Eye, Edit, Clock, DollarSign } from "lucide-react";
+import { Search, Eye, Edit, Clock, DollarSign, Receipt } from "lucide-react";
+import { AddOrderDialog } from "@/components/orders/AddOrderDialog";
+import { useToast } from "@/hooks/use-toast";
 
 export const OrdersManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: orders } = useQuery({
     queryKey: ['orders', statusFilter, searchTerm],
@@ -41,6 +45,42 @@ export const OrdersManagement = () => {
       const { data, error } = await query;
       if (error) throw error;
       return data;
+    }
+  });
+
+  const updateOrderStatus = useMutation({
+    mutationFn: async ({ orderId, status, tableId }: { orderId: string; status: string; tableId?: string }) => {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+
+      // Si la commande est terminée (payée), libérer la table
+      if (status === 'paid' && tableId) {
+        const { error: tableError } = await supabase
+          .from('restaurant_tables')
+          .update({ status: 'cleaning' })
+          .eq('id', tableId);
+        
+        if (tableError) throw tableError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['restaurant-tables'] });
+      toast({
+        title: "Statut mis à jour",
+        description: "Le statut de la commande a été modifié avec succès.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le statut de la commande.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -78,6 +118,10 @@ export const OrdersManagement = () => {
     { value: "cancelled", label: "Annulé" },
   ];
 
+  const handleStatusChange = (orderId: string, newStatus: string, tableId?: string) => {
+    updateOrderStatus.mutate({ orderId, status: newStatus, tableId });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -85,10 +129,7 @@ export const OrdersManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Gestion des Commandes</h1>
           <p className="text-gray-600 mt-1">Suivez et gérez toutes vos commandes</p>
         </div>
-        <Button className="bg-amber-600 hover:bg-amber-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle Commande
-        </Button>
+        <AddOrderDialog />
       </div>
 
       {/* Filtres et recherche */}
@@ -165,6 +206,47 @@ export const OrdersManagement = () => {
                           {order.notes}
                         </p>
                       </div>
+                    )}
+                  </div>
+
+                  {/* Actions rapides */}
+                  <div className="flex flex-wrap gap-2">
+                    {order.status === 'pending' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStatusChange(order.id, 'preparing')}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Démarrer préparation
+                      </Button>
+                    )}
+                    {order.status === 'preparing' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStatusChange(order.id, 'ready')}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        Marquer prêt
+                      </Button>
+                    )}
+                    {order.status === 'ready' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStatusChange(order.id, 'served')}
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        Marquer servi
+                      </Button>
+                    )}
+                    {order.status === 'served' && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleStatusChange(order.id, 'paid', order.table_id)}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        <Receipt className="h-4 w-4 mr-1" />
+                        Générer reçu
+                      </Button>
                     )}
                   </div>
                 </div>
