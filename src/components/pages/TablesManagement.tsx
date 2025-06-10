@@ -5,11 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Eye } from "lucide-react";
+import { Edit, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AddTableDialog } from "@/components/tables/AddTableDialog";
+import { EditTableDialog } from "@/components/tables/EditTableDialog";
+import { TableOrdersDialog } from "@/components/tables/TableOrdersDialog";
 
 export const TablesManagement = () => {
   const [selectedTable, setSelectedTable] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [ordersDialogOpen, setOrdersDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -75,6 +80,18 @@ export const TablesManagement = () => {
     updateTableStatus.mutate({ tableId, status: newStatus });
   };
 
+  const handleEditTable = () => {
+    if (selectedTable) {
+      setEditDialogOpen(true);
+    }
+  };
+
+  const handleViewOrders = () => {
+    if (selectedTable) {
+      setOrdersDialogOpen(true);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -90,10 +107,7 @@ export const TablesManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Gestion des Tables</h1>
           <p className="text-gray-600 mt-1">Gérez l'état et l'occupation de vos tables</p>
         </div>
-        <Button className="bg-amber-600 hover:bg-amber-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle Table
-        </Button>
+        <AddTableDialog />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -194,11 +208,11 @@ export const TablesManagement = () => {
                   </div>
                   
                   <div className="border-t pt-4 space-y-2">
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" onClick={handleViewOrders}>
                       <Eye className="h-4 w-4 mr-2" />
                       Voir commandes
                     </Button>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" onClick={handleEditTable}>
                       <Edit className="h-4 w-4 mr-2" />
                       Modifier table
                     </Button>
@@ -239,6 +253,19 @@ export const TablesManagement = () => {
           </Card>
         </div>
       </div>
+
+      {/* Dialogs */}
+      <EditTableDialog
+        table={selectedTable}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+      
+      <TableOrdersDialog
+        table={selectedTable}
+        open={ordersDialogOpen}
+        onOpenChange={setOrdersDialogOpen}
+      />
     </div>
   );
 };
