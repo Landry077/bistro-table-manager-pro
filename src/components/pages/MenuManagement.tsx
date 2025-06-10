@@ -7,10 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Edit, Trash2, Eye } from "lucide-react";
+import { AddProductDialog } from "@/components/products/AddProductDialog";
+import { EditProductDialog } from "@/components/products/EditProductDialog";
+import { DeleteProductDialog } from "@/components/products/DeleteProductDialog";
 
 export const MenuManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [deletingProduct, setDeletingProduct] = useState<any>(null);
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -54,15 +60,18 @@ export const MenuManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Menu & Produits</h1>
-          <p className="text-gray-600 mt-1">Gérez votre carte et vos produits</p>
+          <h1 className="text-3xl font-bold text-gray-900">Gestion des Produits</h1>
+          <p className="text-gray-600 mt-1">Gérez vos produits et leurs catégories</p>
         </div>
         <div className="flex space-x-3">
           <Button variant="outline" className="border-amber-600 text-amber-600 hover:bg-amber-50">
             <Plus className="h-4 w-4 mr-2" />
             Nouvelle Catégorie
           </Button>
-          <Button className="bg-amber-600 hover:bg-amber-700">
+          <Button 
+            className="bg-amber-600 hover:bg-amber-700"
+            onClick={() => setShowAddDialog(true)}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Nouveau Produit
           </Button>
@@ -165,10 +174,19 @@ export const MenuManagement = () => {
                   )}
                 </div>
                 <div className="flex space-x-1">
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => setEditingProduct(product)}
+                  >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-red-600 hover:text-red-700"
+                    onClick={() => setDeletingProduct(product)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -199,6 +217,24 @@ export const MenuManagement = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Dialogs */}
+      <AddProductDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+      />
+      
+      <EditProductDialog
+        product={editingProduct}
+        open={!!editingProduct}
+        onOpenChange={(open) => !open && setEditingProduct(null)}
+      />
+      
+      <DeleteProductDialog
+        product={deletingProduct}
+        open={!!deletingProduct}
+        onOpenChange={(open) => !open && setDeletingProduct(null)}
+      />
     </div>
   );
 };

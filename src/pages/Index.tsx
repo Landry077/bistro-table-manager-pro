@@ -4,6 +4,8 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Dashboard } from "@/components/pages/Dashboard";
 import { TablesManagement } from "@/components/pages/TablesManagement";
 import { MenuManagement } from "@/components/pages/MenuManagement";
+import { MenusManagement } from "@/components/pages/MenusManagement";
+import { StockManagement } from "@/components/pages/StockManagement";
 import { OrdersManagement } from "@/components/pages/OrdersManagement";
 import { CustomersManagement } from "@/components/pages/CustomersManagement";
 import { Reports } from "@/components/pages/Reports";
@@ -19,6 +21,10 @@ const Index = () => {
         return <TablesManagement />;
       case "menu":
         return <MenuManagement />;
+      case "menus":
+        return <MenusManagement />;
+      case "stock":
+        return <StockManagement />;
       case "orders":
         return <OrdersManagement />;
       case "customers":
