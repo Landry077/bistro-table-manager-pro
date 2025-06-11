@@ -16,21 +16,30 @@ import { Login } from "@/components/pages/Login";
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     // Vérifier si l'utilisateur est connecté
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser) {
+    const currentUserData = localStorage.getItem('currentUser');
+    if (currentUserData) {
+      const user = JSON.parse(currentUserData);
+      setCurrentUser(user);
       setIsAuthenticated(true);
     }
   }, []);
 
   const handleLogin = () => {
+    const currentUserData = localStorage.getItem('currentUser');
+    if (currentUserData) {
+      const user = JSON.parse(currentUserData);
+      setCurrentUser(user);
+    }
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
+    setCurrentUser(null);
     setIsAuthenticated(false);
     setActiveTab("dashboard");
   };
@@ -72,7 +81,13 @@ const Index = () => {
       <main className="flex-1 overflow-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <div></div>
+            <div className="flex items-center space-x-4">
+              {currentUser && (
+                <div className="text-sm text-gray-600">
+                  Connecté en tant que: <strong>{currentUser.username}</strong> ({currentUser.role})
+                </div>
+              )}
+            </div>
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"

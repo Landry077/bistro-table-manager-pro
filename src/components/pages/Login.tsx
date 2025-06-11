@@ -51,7 +51,7 @@ export const Login = ({ onLogin }: LoginProps) => {
       localStorage.setItem('currentUser', JSON.stringify(user));
       toast({
         title: "Connexion réussie",
-        description: `Bienvenue ${username} !`,
+        description: `Bienvenue ${username} ! Rôle: ${user.role}`,
       });
       onLogin();
     },
@@ -116,6 +116,14 @@ export const Login = ({ onLogin }: LoginProps) => {
               {login.isPending ? "Connexion..." : "Se connecter"}
             </Button>
           </form>
+          
+          <div className="mt-6 p-4 bg-amber-50 rounded-lg">
+            <h3 className="font-semibold text-amber-800 mb-2">Comptes de test :</h3>
+            <div className="text-sm text-amber-700 space-y-1">
+              <div><strong>Admin</strong> / Admin360 (Administrateur)</div>
+              <div><strong>SupRestau</strong> / SupRestau (Superviseur)</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

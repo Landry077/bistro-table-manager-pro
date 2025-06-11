@@ -520,6 +520,7 @@ export type Database = {
           is_active: boolean | null
           last_login: string | null
           password_hash: string
+          role: Database["public"]["Enums"]["user_role"] | null
           staff_id: string | null
           updated_at: string | null
           username: string
@@ -530,6 +531,7 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           password_hash: string
+          role?: Database["public"]["Enums"]["user_role"] | null
           staff_id?: string | null
           updated_at?: string | null
           username: string
@@ -540,6 +542,7 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           password_hash?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
           staff_id?: string | null
           updated_at?: string | null
           username?: string
@@ -563,6 +566,7 @@ export type Database = {
     }
     Enums: {
       staff_role: "cuisinier" | "gerant" | "serveur" | "superviseur"
+      user_role: "administrateur" | "superviseur" | "utilisateur"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -679,6 +683,7 @@ export const Constants = {
   public: {
     Enums: {
       staff_role: ["cuisinier", "gerant", "serveur", "superviseur"],
+      user_role: ["administrateur", "superviseur", "utilisateur"],
     },
   },
 } as const
