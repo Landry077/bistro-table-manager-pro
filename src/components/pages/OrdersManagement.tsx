@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Eye, Edit, Clock, DollarSign, Receipt } from "lucide-react";
-import { AddOrderDialog } from "@/components/orders/AddOrderDialog";
+import { AddOrderButton } from "@/components/orders/AddOrderButton";
 import { useToast } from "@/hooks/use-toast";
 
 export const OrdersManagement = () => {
@@ -129,7 +128,7 @@ export const OrdersManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Gestion des Commandes</h1>
           <p className="text-gray-600 mt-1">Suivez et gérez toutes vos commandes</p>
         </div>
-        <AddOrderDialog />
+        <AddOrderButton />
       </div>
 
       {/* Filtres et recherche */}

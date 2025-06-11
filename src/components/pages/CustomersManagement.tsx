@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Mail, Phone, Star, Edit, Eye } from "lucide-react";
-import { AddCustomerDialog } from "@/components/customers/AddCustomerDialog";
+import { AddCustomerButton } from "@/components/customers/AddCustomerButton";
 import { EditCustomerDialog } from "@/components/customers/EditCustomerDialog";
 
 export const CustomersManagement = () => {
@@ -52,7 +51,7 @@ export const CustomersManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Gestion des Clients</h1>
           <p className="text-gray-600 mt-1">Gérez votre base de données clients</p>
         </div>
-        <AddCustomerDialog />
+        <AddCustomerButton />
       </div>
 
       {/* Barre de recherche */}

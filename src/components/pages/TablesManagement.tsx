@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AddTableDialog } from "@/components/tables/AddTableDialog";
+import { AddTableButton } from "@/components/tables/AddTableButton";
 import { EditTableDialog } from "@/components/tables/EditTableDialog";
 import { TableOrdersDialog } from "@/components/tables/TableOrdersDialog";
 
@@ -107,7 +106,7 @@ export const TablesManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Gestion des Tables</h1>
           <p className="text-gray-600 mt-1">Gérez l'état et l'occupation de vos tables</p>
         </div>
-        <AddTableDialog />
+        <AddTableButton />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
