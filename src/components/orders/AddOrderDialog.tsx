@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -14,19 +14,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Minus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const AddOrderDialog = () => {
   const [open, setOpen] = useState(false);
+  const [orderNumber, setOrderNumber] = useState("");
   const [tableId, setTableId] = useState("");
   const [customerId, setCustomerId] = useState("");
+  const [staffId, setStaffId] = useState("");
   const [notes, setNotes] = useState("");
-  const [orderItems, setOrderItems] = useState<any[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: availableTables } = useQuery({
+  // Générer un numéro de commande automatique
+  const generateOrderNumber = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    return `CMD${timestamp}`;
+  };
+
+  // Récupérer les tables disponibles
+  const { data: tables } = useQuery({
     queryKey: ['available-tables'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -40,8 +48,9 @@ export const AddOrderDialog = () => {
     }
   });
 
+  // Récupérer les clients
   const { data: customers } = useQuery({
-    queryKey: ['customers-for-order'],
+    queryKey: ['customers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('customers')
@@ -53,14 +62,16 @@ export const AddOrderDialog = () => {
     }
   });
 
-  const { data: products } = useQuery({
-    queryKey: ['products-for-order'],
+  // Récupérer les serveurs
+  const { data: servers } = useQuery({
+    queryKey: ['servers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('products')
+        .from('staff')
         .select('*')
-        .eq('is_available', true)
-        .order('name');
+        .eq('role', 'serveur')
+        .eq('is_active', true)
+        .order('first_name');
       
       if (error) throw error;
       return data;
@@ -69,49 +80,34 @@ export const AddOrderDialog = () => {
 
   const createOrder = useMutation({
     mutationFn: async () => {
-      // Générer un numéro de commande unique
-      const orderNumber = `CMD-${Date.now()}`;
+      const finalOrderNumber = orderNumber || generateOrderNumber();
       
-      // Calculer le total
-      const totalAmount = orderItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-
       // Créer la commande
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
-          order_number: orderNumber,
-          table_id: tableId,
+          order_number: finalOrderNumber,
+          table_id: tableId || null,
           customer_id: customerId || null,
-          total_amount: totalAmount,
+          staff_id: staffId || null,
           notes: notes || null,
-          status: 'pending'
+          status: 'en_attente',
+          total_amount: 0,
         })
         .select()
         .single();
-
+      
       if (orderError) throw orderError;
 
-      // Créer les éléments de la commande
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(
-          orderItems.map(item => ({
-            order_id: order.id,
-            product_id: item.product_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price
-          }))
-        );
-
-      if (itemsError) throw itemsError;
-
-      // Mettre à jour le statut de la table
-      const { error: tableError } = await supabase
-        .from('restaurant_tables')
-        .update({ status: 'occupied' })
-        .eq('id', tableId);
-
-      if (tableError) throw tableError;
+      // Mettre à jour le statut de la table si une table est sélectionnée
+      if (tableId) {
+        const { error: tableError } = await supabase
+          .from('restaurant_tables')
+          .update({ status: 'occupee' })
+          .eq('id', tableId);
+        
+        if (tableError) throw tableError;
+      }
 
       return order;
     },
@@ -136,59 +132,17 @@ export const AddOrderDialog = () => {
   });
 
   const resetForm = () => {
+    setOrderNumber("");
     setTableId("");
     setCustomerId("");
+    setStaffId("");
     setNotes("");
-    setOrderItems([]);
-  };
-
-  const addOrderItem = () => {
-    setOrderItems([...orderItems, { product_id: "", quantity: 1, unit_price: 0 }]);
-  };
-
-  const removeOrderItem = (index: number) => {
-    setOrderItems(orderItems.filter((_, i) => i !== index));
-  };
-
-  const updateOrderItem = (index: number, field: string, value: any) => {
-    const updated = [...orderItems];
-    updated[index][field] = value;
-    
-    if (field === "product_id") {
-      const product = products?.find(p => p.id === value);
-      if (product) {
-        updated[index].unit_price = product.price;
-      }
-    }
-    
-    setOrderItems(updated);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tableId || orderItems.length === 0) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner une table et ajouter au moins un produit.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const hasIncompleteItems = orderItems.some(item => !item.product_id || item.quantity <= 0);
-    if (hasIncompleteItems) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez compléter tous les produits de la commande.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     createOrder.mutate();
   };
-
-  const totalAmount = orderItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -198,29 +152,41 @@ export const AddOrderDialog = () => {
           Nouvelle Commande
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Créer une nouvelle commande</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Table *</Label>
+              <Label htmlFor="orderNumber">Numéro de commande</Label>
+              <Input
+                id="orderNumber"
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+                placeholder="Auto-généré si vide"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="table">Table</Label>
               <Select value={tableId} onValueChange={setTableId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une table" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTables?.map((table) => (
+                  {tables?.map((table) => (
                     <SelectItem key={table.id} value={table.id}>
-                      Table {table.table_number} ({table.capacity} pers.)
+                      Table {table.table_number} ({table.capacity} places)
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Client (optionnel)</Label>
+              <Label htmlFor="customer">Client (optionnel)</Label>
               <Select value={customerId} onValueChange={setCustomerId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un client" />
@@ -234,92 +200,41 @@ export const AddOrderDialog = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-lg font-semibold">Produits de la commande</Label>
-              <Button type="button" onClick={addOrderItem} size="sm">
-                <Plus className="h-4 w-4 mr-1" />
-                Ajouter un produit
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="server">Serveur</Label>
+              <Select value={staffId} onValueChange={setStaffId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un serveur" />
+                </SelectTrigger>
+                <SelectContent>
+                  {servers?.map((server) => (
+                    <SelectItem key={server.id} value={server.id}>
+                      {server.first_name} {server.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            
-            {orderItems.map((item, index) => (
-              <div key={index} className="flex items-center space-x-2 p-3 border rounded-lg">
-                <div className="flex-1">
-                  <Select 
-                    value={item.product_id} 
-                    onValueChange={(value) => updateOrderItem(index, "product_id", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un produit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {products?.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.name} - {product.price}€
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => updateOrderItem(index, "quantity", Math.max(1, item.quantity - 1))}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <span className="w-8 text-center">{item.quantity}</span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => updateOrderItem(index, "quantity", item.quantity + 1)}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="w-20 text-right font-medium">
-                  {(item.quantity * item.unit_price).toFixed(2)}€
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => removeOrderItem(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
           </div>
-
+          
           <div className="space-y-2">
-            <Label>Notes (optionnel)</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea
+              id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Notes pour la commande..."
+              placeholder="Notes sur la commande..."
               rows={3}
             />
           </div>
-
-          <div className="flex items-center justify-between border-t pt-4">
-            <div className="text-xl font-bold">
-              Total: {totalAmount.toFixed(2)}€
-            </div>
-            <div className="flex space-x-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={createOrder.isPending}>
-                {createOrder.isPending ? "Création..." : "Créer la commande"}
-              </Button>
-            </div>
+          
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={createOrder.isPending}>
+              {createOrder.isPending ? "Création..." : "Créer"}
+            </Button>
           </div>
         </form>
       </DialogContent>

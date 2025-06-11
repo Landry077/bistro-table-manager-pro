@@ -187,6 +187,7 @@ export type Database = {
           id: string
           notes: string | null
           order_number: string
+          staff_id: string | null
           status: string | null
           table_id: string | null
           total_amount: number | null
@@ -198,6 +199,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number: string
+          staff_id?: string | null
           status?: string | null
           table_id?: string | null
           total_amount?: number | null
@@ -209,6 +211,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_number?: string
+          staff_id?: string | null
           status?: string | null
           table_id?: string | null
           total_amount?: number | null
@@ -220,6 +223,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
           {
@@ -316,6 +326,42 @@ export type Database = {
           },
         ]
       }
+      restaurant_settings: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          currency: string
+          currency_symbol: string
+          email: string | null
+          id: string
+          phone: string | null
+          restaurant_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          currency?: string
+          currency_symbol?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          restaurant_name?: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          currency?: string
+          currency_symbol?: string
+          email?: string | null
+          id?: string
+          phone?: string | null
+          restaurant_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       restaurant_tables: {
         Row: {
           capacity: number
@@ -343,6 +389,45 @@ export type Database = {
           position_y?: number | null
           status?: string | null
           table_number?: number
+        }
+        Relationships: []
+      }
+      staff: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          first_name: string
+          hire_date: string | null
+          id: string
+          is_active: boolean | null
+          last_name: string
+          phone: string | null
+          role: Database["public"]["Enums"]["staff_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          first_name: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_name: string
+          phone?: string | null
+          role: Database["public"]["Enums"]["staff_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          first_name?: string
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_name?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["staff_role"]
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -428,6 +513,47 @@ export type Database = {
           },
         ]
       }
+      users: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_login: string | null
+          password_hash: string
+          staff_id: string | null
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_hash: string
+          staff_id?: string | null
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_hash?: string
+          staff_id?: string | null
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -436,7 +562,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      staff_role: "cuisinier" | "gerant" | "serveur" | "superviseur"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -551,6 +677,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      staff_role: ["cuisinier", "gerant", "serveur", "superviseur"],
+    },
   },
 } as const

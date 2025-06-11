@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   BarChart3, 
@@ -10,7 +9,9 @@ import {
   ChevronLeft, 
   ChevronRight,
   Coffee,
-  Package
+  Package,
+  UserCog,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,8 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     { id: "stock", label: "Gestion du Stock", icon: Package },
     { id: "orders", label: "Commandes", icon: ShoppingCart },
     { id: "customers", label: "Clients", icon: Users },
+    { id: "staff", label: "Personnel", icon: UserCog },
+    { id: "settings", label: "Paramètres", icon: Settings },
     { id: "reports", label: "Rapports", icon: FileText },
   ];
 
