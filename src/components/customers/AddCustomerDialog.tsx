@@ -7,16 +7,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-export const AddCustomerDialog = () => {
-  const [open, setOpen] = useState(false);
+interface AddCustomerDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export const AddCustomerDialog = ({ open, onOpenChange }: AddCustomerDialogProps) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -24,15 +26,16 @@ export const AddCustomerDialog = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const createCustomer = useMutation({
+  const addCustomer = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
         .from('customers')
         .insert({
           first_name: firstName,
           last_name: lastName,
-          email: email || null,
-          phone: phone || null,
+          email: email || undefined,
+          phone: phone || undefined,
+          loyalty_points: 0,
         });
       
       if (error) throw error;
@@ -43,11 +46,8 @@ export const AddCustomerDialog = () => {
         title: "Client ajouté",
         description: "Le client a été ajouté avec succès.",
       });
-      setOpen(false);
-      setFirstName("");
-      setLastName("");
-      setEmail("");
-      setPhone("");
+      onOpenChange(false);
+      resetForm();
     },
     onError: (error) => {
       toast({
@@ -58,30 +58,31 @@ export const AddCustomerDialog = () => {
     }
   });
 
+  const resetForm = () => {
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setPhone("");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName.trim() || !lastName.trim()) {
+    if (!firstName || !lastName) {
       toast({
         title: "Erreur",
-        description: "Le prénom et le nom sont obligatoires.",
+        description: "Veuillez remplir au moins le nom et prénom.",
         variant: "destructive",
       });
       return;
     }
-    createCustomer.mutate();
+    addCustomer.mutate();
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-amber-600 hover:bg-amber-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau Client
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Ajouter un nouveau client</DialogTitle>
+          <DialogTitle>Ajouter un client</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -91,7 +92,7 @@ export const AddCustomerDialog = () => {
                 id="firstName"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Prénom"
+                required
               />
             </div>
             <div className="space-y-2">
@@ -100,10 +101,11 @@ export const AddCustomerDialog = () => {
                 id="lastName"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Nom"
+                required
               />
             </div>
           </div>
+          
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -111,24 +113,24 @@ export const AddCustomerDialog = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@exemple.com"
             />
           </div>
+          
           <div className="space-y-2">
             <Label htmlFor="phone">Téléphone</Label>
             <Input
               id="phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="0123456789"
             />
           </div>
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Annuler
             </Button>
-            <Button type="submit" disabled={createCustomer.isPending}>
-              {createCustomer.isPending ? "Ajout..." : "Ajouter"}
+            <Button type="submit" disabled={addCustomer.isPending}>
+              {addCustomer.isPending ? "Ajout..." : "Ajouter"}
             </Button>
           </div>
         </form>

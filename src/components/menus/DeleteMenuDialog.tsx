@@ -25,12 +25,21 @@ export const DeleteMenuDialog = ({ menu, open, onOpenChange }: DeleteMenuDialogP
 
   const deleteMenu = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
+      // Supprimer d'abord les produits du menu
+      const { error: menuProductsError } = await supabase
+        .from('menu_products')
+        .delete()
+        .eq('menu_id', menu.id);
+      
+      if (menuProductsError) throw menuProductsError;
+
+      // Ensuite supprimer le menu
+      const { error: menuError } = await supabase
         .from('menus')
         .delete()
         .eq('id', menu.id);
       
-      if (error) throw error;
+      if (menuError) throw menuError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['menus'] });
@@ -49,10 +58,6 @@ export const DeleteMenuDialog = ({ menu, open, onOpenChange }: DeleteMenuDialogP
     }
   });
 
-  const handleDelete = () => {
-    deleteMenu.mutate();
-  };
-
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -60,15 +65,15 @@ export const DeleteMenuDialog = ({ menu, open, onOpenChange }: DeleteMenuDialogP
           <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
           <AlertDialogDescription>
             Êtes-vous sûr de vouloir supprimer le menu "{menu?.name}" ? 
-            Cette action est irréversible et supprimera également tous les produits associés à ce menu.
+            Cette action est irréversible.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700"
+            onClick={() => deleteMenu.mutate()}
             disabled={deleteMenu.isPending}
+            className="bg-red-600 hover:bg-red-700"
           >
             {deleteMenu.isPending ? "Suppression..." : "Supprimer"}
           </AlertDialogAction>

@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 interface EditProductDialogProps {
@@ -27,8 +27,8 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [preparationTime, setPreparationTime] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [preparationTime, setPreparationTime] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -52,25 +52,25 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
       setDescription(product.description || "");
       setPrice(product.price?.toString() || "");
       setCategoryId(product.category_id || "");
-      setPreparationTime(product.preparation_time?.toString() || "");
       setImageUrl(product.image_url || "");
+      setPreparationTime(product.preparation_time?.toString() || "0");
       setIsAvailable(product.is_available ?? true);
     }
   }, [product]);
 
   const updateProduct = useMutation({
-    mutationFn: async (updatedProduct: {
-      name: string;
-      description?: string;
-      price: number;
-      category_id?: string;
-      preparation_time?: number;
-      image_url?: string;
-      is_available: boolean;
-    }) => {
+    mutationFn: async () => {
       const { error } = await supabase
         .from('products')
-        .update(updatedProduct)
+        .update({
+          name,
+          description: description || undefined,
+          price: parseFloat(price),
+          category_id: categoryId || undefined,
+          image_url: imageUrl || undefined,
+          preparation_time: preparationTime ? parseInt(preparationTime) : 0,
+          is_available: isAvailable,
+        })
         .eq('id', product.id);
       
       if (error) throw error;
@@ -102,45 +102,28 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
       });
       return;
     }
-
-    updateProduct.mutate({
-      name,
-      description: description || undefined,
-      price: parseFloat(price),
-      category_id: categoryId || undefined,
-      preparation_time: preparationTime ? parseInt(preparationTime) : undefined,
-      image_url: imageUrl || undefined,
-      is_available: isAvailable,
-    });
+    updateProduct.mutate();
   };
 
   if (!product) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Modifier le produit</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nom du produit *</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nom du produit *</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="price">Prix *</Label>
               <Input
@@ -152,6 +135,33 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
                 required
               />
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Catégorie</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une catégorie" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="preparationTime">Temps de préparation (min)</Label>
               <Input
@@ -162,21 +172,7 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="category">Catégorie</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une catégorie" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories?.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="imageUrl">URL de l'image</Label>
             <Input
@@ -186,6 +182,7 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
               onChange={(e) => setImageUrl(e.target.value)}
             />
           </div>
+          
           <div className="flex items-center space-x-2">
             <Switch
               id="isAvailable"
@@ -194,6 +191,7 @@ export const EditProductDialog = ({ product, open, onOpenChange }: EditProductDi
             />
             <Label htmlFor="isAvailable">Disponible</Label>
           </div>
+
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Annuler

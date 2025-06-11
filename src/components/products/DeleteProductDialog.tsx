@@ -49,10 +49,6 @@ export const DeleteProductDialog = ({ product, open, onOpenChange }: DeleteProdu
     }
   });
 
-  const handleDelete = () => {
-    deleteProduct.mutate();
-  };
-
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -66,9 +62,9 @@ export const DeleteProductDialog = ({ product, open, onOpenChange }: DeleteProdu
         <AlertDialogFooter>
           <AlertDialogCancel>Annuler</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleDelete}
-            className="bg-red-600 hover:bg-red-700"
+            onClick={() => deleteProduct.mutate()}
             disabled={deleteProduct.isPending}
+            className="bg-red-600 hover:bg-red-700"
           >
             {deleteProduct.isPending ? "Suppression..." : "Supprimer"}
           </AlertDialogAction>

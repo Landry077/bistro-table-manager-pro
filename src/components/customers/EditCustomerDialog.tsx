@@ -24,6 +24,7 @@ export const EditCustomerDialog = ({ customer, open, onOpenChange }: EditCustome
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [loyaltyPoints, setLoyaltyPoints] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -33,6 +34,7 @@ export const EditCustomerDialog = ({ customer, open, onOpenChange }: EditCustome
       setLastName(customer.last_name || "");
       setEmail(customer.email || "");
       setPhone(customer.phone || "");
+      setLoyaltyPoints(customer.loyalty_points?.toString() || "0");
     }
   }, [customer]);
 
@@ -43,8 +45,9 @@ export const EditCustomerDialog = ({ customer, open, onOpenChange }: EditCustome
         .update({
           first_name: firstName,
           last_name: lastName,
-          email: email || null,
-          phone: phone || null,
+          email: email || undefined,
+          phone: phone || undefined,
+          loyalty_points: parseInt(loyaltyPoints) || 0,
         })
         .eq('id', customer.id);
       
@@ -54,7 +57,7 @@ export const EditCustomerDialog = ({ customer, open, onOpenChange }: EditCustome
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast({
         title: "Client modifié",
-        description: "Les informations du client ont été mises à jour.",
+        description: "Le client a été modifié avec succès.",
       });
       onOpenChange(false);
     },
@@ -69,16 +72,18 @@ export const EditCustomerDialog = ({ customer, open, onOpenChange }: EditCustome
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName.trim() || !lastName.trim()) {
+    if (!firstName || !lastName) {
       toast({
         title: "Erreur",
-        description: "Le prénom et le nom sont obligatoires.",
+        description: "Veuillez remplir au moins le nom et prénom.",
         variant: "destructive",
       });
       return;
     }
     updateCustomer.mutate();
   };
+
+  if (!customer) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -94,7 +99,7 @@ export const EditCustomerDialog = ({ customer, open, onOpenChange }: EditCustome
                 id="firstName"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Prénom"
+                required
               />
             </div>
             <div className="space-y-2">
@@ -103,10 +108,11 @@ export const EditCustomerDialog = ({ customer, open, onOpenChange }: EditCustome
                 id="lastName"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Nom"
+                required
               />
             </div>
           </div>
+          
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -114,19 +120,29 @@ export const EditCustomerDialog = ({ customer, open, onOpenChange }: EditCustome
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@exemple.com"
             />
           </div>
+          
           <div className="space-y-2">
             <Label htmlFor="phone">Téléphone</Label>
             <Input
               id="phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="0123456789"
             />
           </div>
-          <div className="flex justify-end space-x-2">
+
+          <div className="space-y-2">
+            <Label htmlFor="loyaltyPoints">Points de fidélité</Label>
+            <Input
+              id="loyaltyPoints"
+              type="number"
+              value={loyaltyPoints}
+              onChange={(e) => setLoyaltyPoints(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Annuler
             </Button>
