@@ -22,20 +22,34 @@ export const Login = ({ onLogin }: LoginProps) => {
     mutationFn: async () => {
       console.log("Tentative de connexion avec:", username, password);
       
-      // Vérification simple dans la base de données
-      const { data: user, error } = await supabase
+      // Vérifier d'abord si l'utilisateur existe
+      const { data: user, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('username', username)
-        .eq('password_hash', password)
         .eq('is_active', true)
         .single();
       
-      console.log("Résultat de la requête:", { user, error });
+      console.log("Résultat de la requête utilisateur:", { user, error: userError });
       
-      if (error || !user) {
-        throw new Error('Nom d\'utilisateur ou mot de passe incorrect');
+      if (userError || !user) {
+        throw new Error('Nom d\'utilisateur incorrect ou inexistant');
       }
+
+      // Vérifier le mot de passe
+      // Note: En production, il faudrait comparer avec un hash bcrypt
+      // Pour le moment, on vérifie si c'est déjà hashé ou en clair
+      const isPasswordCorrect = user.password_hash === password;
+      
+      if (!isPasswordCorrect) {
+        throw new Error('Mot de passe incorrect');
+      }
+
+      // Mettre à jour la dernière connexion
+      await supabase
+        .from('users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', user.id);
 
       return user;
     },
@@ -69,10 +83,19 @@ export const Login = ({ onLogin }: LoginProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username.trim() || !password.trim()) {
+    if (!username.trim()) {
       toast({
         title: "Erreur",
-        description: "Veuillez saisir votre nom d'utilisateur et mot de passe.",
+        description: "Veuillez saisir votre nom d'utilisateur.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!password.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez saisir votre mot de passe.",
         variant: "destructive",
       });
       return;
@@ -126,6 +149,9 @@ export const Login = ({ onLogin }: LoginProps) => {
             <div className="text-sm text-amber-700 space-y-1">
               <div><strong>Admin</strong> / Admin360 (Administrateur)</div>
               <div><strong>SupRestau</strong> / SupRestau (Superviseur)</div>
+            </div>
+            <div className="mt-2 text-xs text-amber-600">
+              Note: Les mots de passe sont stockés en clair pour cette démo. En production, ils seraient hashés avec bcrypt.
             </div>
           </div>
         </CardContent>
