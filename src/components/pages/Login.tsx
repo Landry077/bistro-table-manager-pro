@@ -20,42 +20,44 @@ export const Login = ({ onLogin }: LoginProps) => {
 
   const login = useMutation({
     mutationFn: async () => {
-      // Récupérer l'utilisateur par nom d'utilisateur
-      const { data: user, error: userError } = await supabase
+      console.log("Tentative de connexion avec:", username, password);
+      
+      // Vérification simple dans la base de données
+      const { data: user, error } = await supabase
         .from('users')
         .select('*')
         .eq('username', username)
+        .eq('password_hash', password)
         .eq('is_active', true)
         .single();
       
-      if (userError || !user) {
+      console.log("Résultat de la requête:", { user, error });
+      
+      if (error || !user) {
         throw new Error('Nom d\'utilisateur ou mot de passe incorrect');
       }
-
-      // Pour cette démo, on fait une comparaison simple du mot de passe
-      // En production, il faudrait utiliser un hachage sécurisé
-      if (user.password_hash !== password) {
-        throw new Error('Nom d\'utilisateur ou mot de passe incorrect');
-      }
-
-      // Mettre à jour la dernière connexion
-      await supabase
-        .from('users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', user.id);
 
       return user;
     },
     onSuccess: (user) => {
-      // Stocker l'utilisateur dans le localStorage pour cette démo
-      localStorage.setItem('currentUser', JSON.stringify(user));
+      console.log("Connexion réussie pour:", user);
+      
+      // Stocker l'utilisateur dans le localStorage
+      localStorage.setItem('currentUser', JSON.stringify({
+        id: user.id,
+        username: user.username,
+        role: user.role
+      }));
+      
       toast({
         title: "Connexion réussie",
-        description: `Bienvenue ${username} ! Rôle: ${user.role}`,
+        description: `Bienvenue ${user.username} !`,
       });
+      
       onLogin();
     },
     onError: (error) => {
+      console.error("Erreur de connexion:", error);
       toast({
         title: "Erreur de connexion",
         description: error.message,
@@ -66,6 +68,7 @@ export const Login = ({ onLogin }: LoginProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!username.trim() || !password.trim()) {
       toast({
         title: "Erreur",
@@ -74,6 +77,7 @@ export const Login = ({ onLogin }: LoginProps) => {
       });
       return;
     }
+    
     login.mutate();
   };
 

@@ -23,6 +23,7 @@ const Index = () => {
     const currentUserData = localStorage.getItem('currentUser');
     if (currentUserData) {
       const user = JSON.parse(currentUserData);
+      console.log("Utilisateur trouvé dans localStorage:", user);
       setCurrentUser(user);
       setIsAuthenticated(true);
     }
@@ -32,6 +33,7 @@ const Index = () => {
     const currentUserData = localStorage.getItem('currentUser');
     if (currentUserData) {
       const user = JSON.parse(currentUserData);
+      console.log("Connexion réussie, utilisateur:", user);
       setCurrentUser(user);
     }
     setIsAuthenticated(true);
@@ -83,8 +85,8 @@ const Index = () => {
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center space-x-4">
               {currentUser && (
-                <div className="text-sm text-gray-600">
-                  Connecté en tant que: <strong>{currentUser.username}</strong> ({currentUser.role})
+                <div className="text-lg font-semibold text-gray-800">
+                  Bonjour, <span className="text-amber-600">{currentUser.username}</span>
                 </div>
               )}
             </div>
